@@ -60,7 +60,8 @@ def plot(data_dict, *, unique_keys=None, sort_by='size', inters_size_bounds=(0, 
         plot_data.get_filtered_intersections(sort_by, inters_size_bounds, inters_degree_bounds)
     ordered_dfs, ordered_df_names = plot_data.ordered_dfs, plot_data.ordered_df_names
 
-    upset = UpSetPlot(len(ordered_dfs), len(ordered_in_sets), additional_plots, query)
+    upset = UpSetPlot(len(ordered_dfs), len(ordered_in_sets), additional_plots, query,
+                      figsize=(34,21))
     fig_dict = upset.main_plot(ordered_dfs, ordered_df_names, ordered_in_sets, ordered_out_sets,
                                ordered_inters_sizes)
     fig_dict['additional'] = []
@@ -96,7 +97,7 @@ def __get_all_common_columns(data_dict):
 
 
 class UpSetPlot:
-    def __init__(self, rows, cols, additional_plots, query):
+    def __init__(self, rows, cols, additional_plots, query, figsize=(17, 10.5)):
         """
         Generates figures and axes.
 
@@ -111,6 +112,7 @@ class UpSetPlot:
 
         # set standard colors
         self.greys = plt.cm.Greys([.22, .8])
+        self.figsize = figsize
 
         # map queries to graphic properties
         self.query = query
@@ -163,7 +165,7 @@ class UpSetPlot:
         :param additional_plots: list of dictionaries as specified in plot()
         :return: references to the newly created figure and axes
         """
-        fig = plt.figure(figsize=(17, 10.5))
+        fig = plt.figure(figsize=self.figsize)
         if additional_plots:
             main_gs = gridspec.GridSpec(3, 1, hspace=.4)
             topgs = main_gs[:2, 0]
@@ -239,7 +241,7 @@ class UpSetPlot:
 
         :return: dictionary containing figure and axes references.
         """
-        ylim = self._base_sets_plot(ordered_dfs, ordered_df_names)
+        ylim = self._base_sets_plot(ordered_dfs)
         self._table_names_plot(ordered_df_names, ylim)
         xlim = self._inters_sizes_plot(ordered_in_sets, ordered_inters_sizes)
         set_row_map = dict(zip(ordered_df_names, self.y_values))
