@@ -1,12 +1,12 @@
-__author__ = 'leo@opensignal.com'
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from itertools import chain, combinations
 from functools import partial
-from matplotlib.patches import Rectangle, Circle
+from matplotlib.patches import Rectangle
+
+__author__ = 'leo@opensignal.com'
 
 
 def plot(data_dict, *, unique_keys=None, sort_by='size', inters_size_bounds=(0, np.inf),
@@ -57,14 +57,13 @@ def plot(data_dict, *, unique_keys=None, sort_by='size', inters_size_bounds=(0, 
 
     plot_data = DataExtractor(data_dict, all_columns)
     ordered_inters_sizes, ordered_in_sets, ordered_out_sets = \
-        plot_data.get_filtered_intersections(sort_by,inters_size_bounds,inters_degree_bounds)
+        plot_data.get_filtered_intersections(sort_by, inters_size_bounds, inters_degree_bounds)
     ordered_dfs, ordered_df_names = plot_data.ordered_dfs, plot_data.ordered_df_names
 
     upset = UpSetPlot(len(ordered_dfs), len(ordered_in_sets), additional_plots, query)
     fig_dict = upset.main_plot(ordered_dfs, ordered_df_names, ordered_in_sets, ordered_out_sets,
                                ordered_inters_sizes)
     fig_dict['additional'] = []
-
 
     # ap = [{kind:'', data:{x:'', y:''}, s:'', ..., kwargs:''}]
     for i, graph_settings in enumerate(ap):
@@ -96,7 +95,7 @@ def __get_all_common_columns(data_dict):
     return common_columns.unique()
 
 
-class UpSetPlot():
+class UpSetPlot:
     def __init__(self, rows, cols, additional_plots, query):
         """
         Generates figures and axes.
@@ -124,7 +123,8 @@ class UpSetPlot():
         self.cols = cols
         self.x_values, self.y_values = self._create_coordinates(rows, cols)
         self.fig, self.ax_intbars, self.ax_intmatrix, \
-        self.ax_setsize, self.ax_tablenames, self.additional_plots_axes = self._prepare_figure(additional_plots)
+            self.ax_setsize, self.ax_tablenames, \
+            self.additional_plots_axes = self._prepare_figure(additional_plots)
 
         self.standard_graph_settings = {
             'scatter': {
@@ -143,7 +143,8 @@ class UpSetPlot():
         # [dict(zip(['color', 'zorder'],
         # [col, 1])) for col in qu_col]))
 
-    def _create_coordinates(self, rows, cols):
+    @staticmethod
+    def _create_coordinates(rows, cols):
         """
         Creates the x, y coordinates shared by the main plots.
 
@@ -191,7 +192,8 @@ class UpSetPlot():
             from itertools import product
 
             for r, c in product(range(num_bot_rows), range(num_bot_cols)):
-                if r+c+1>num_plots: break
+                if r+c+1 > num_plots:
+                    break
                 new_plotL = plt.subplot(gs_bottom[r, c])
                 add_ax.append(new_plotL)
 
@@ -251,8 +253,8 @@ class UpSetPlot():
     def _table_names_plot(self, sorted_set_names, ylim):
         ax = self.ax_tablenames
         ax.set_ylim(ylim)
-        xlim = ax.get_xlim()
-        tr = ax.transData.transform
+        # xlim = ax.get_xlim()
+        # tr = ax.transData.transform
         for i, name in enumerate(sorted_set_names):
             ax.text(x=1,  # (xlim[1]-xlim[0]/2),
                     y=self.y_values[i],
@@ -278,13 +280,12 @@ class UpSetPlot():
         #                                color=background, zorder=0))
         ax.axis('off')
 
-
-    def _base_sets_plot(self, sorted_sets, sorted_set_names):
+    def _base_sets_plot(self, sorted_sets):  # , sorted_set_names):
         """
         Plots horizontal bar plot for base set sizes.
 
         :param sorted_sets: list of data frames, sorted according to user's directives.
-        :param sorted_set_names: list of names for the data frames.
+        # :param sorted_set_names: list of names for the data frames.
         :return: Axes.
         """
         ax = self.ax_setsize
@@ -322,7 +323,8 @@ class UpSetPlot():
 
         return ax.get_ylim()
 
-    def _strip_axes(self, ax, keep_spines=None, keep_ticklabels=None):
+    @staticmethod
+    def _strip_axes(ax, keep_spines=None, keep_ticklabels=None):
         """
         Removes spines and tick labels from ax, except those specified by the user.
 
@@ -438,15 +440,24 @@ class UpSetPlot():
             # for c in chain.from_iterable([in_circles, out_circles]):
             # ax.add_patch(c)
             ax.scatter(np.repeat(self.x_values[col_num], len(in_y)), in_y,
-                       color=np.tile(self._color_for_query(frozenset(in_sets)), (len(in_y), 1)),s=300)
+                       color=np.tile(self._color_for_query(frozenset(in_sets)), (len(in_y), 1)),
+                       s=300)
             ax.scatter(np.repeat(self.x_values[col_num], len(out_y)), out_y, color=self.greys[0], s=300)
-            ax.vlines(self.x_values[col_num], min(in_y), max(in_y), lw=3.5, color=self._color_for_query(frozenset(in_sets)))
+            ax.vlines(self.x_values[col_num],
+                      min(in_y),
+                      max(in_y),
+                      lw=3.5,
+                      color=self._color_for_query(frozenset(in_sets)))
 
     def additional_plot(self, ax_index, kind, data_values, graph_args, *, labels=None):
+        # TODO: find out the meaning of "kind" and "graph_args"
         """
         Scatter plot (for additional plots).
 
         :param ax_index: int. Index for the relevant axes (additional plots' axes are stored in a list)
+
+        :param kind: TBD
+        :param graph_args: TBD
 
         :param data_values: list of dictionary. Each dictionary is like {'x':data_for_x, 'y':data_for_y,
         'in_sets':tuple}, where the tuple represents the intersection the data for x and y belongs to.
@@ -469,7 +480,7 @@ class UpSetPlot():
         # data_values = [{query:{relevant data}}]
         ylim, xlim = [np.inf, -np.inf], [np.inf, -np.inf]
         for query, data_item in data_values.items():
-            clr = self._color_for_query(frozenset(query))
+            # clr = self._color_for_query(frozenset(query))
             plot_method(color=self._color_for_query(frozenset(query)),
                         zorder=self._zorder_for_query(frozenset(query)),
                         **data_item
@@ -508,11 +519,11 @@ class DataExtractor:
         self.unique_keys = unique_keys if len(unique_keys) > 1 else unique_keys[0]
         self.ordered_dfs, self.ordered_df_names, self.df_dict = self.extract_base_sets_data(data_dict,
                                                                                             unique_keys)
-        self.in_sets_list, self.inters_degrees, \
-        self.out_sets_list, self.inters_df_dict = self.extract_intersection_data()
+        self.in_sets_list, self.inters_degrees,  \
+            self.out_sets_list, self.inters_df_dict = self.extract_intersection_data()
 
-
-    def extract_base_sets_data(self, data_dict, unique_keys):
+    @staticmethod
+    def extract_base_sets_data(data_dict, unique_keys):
         """
         Extracts data for the bar graph of the base sets sizes.
 
@@ -617,11 +628,15 @@ class DataExtractor:
         data_values = {}
         poss_queries = [q for q in queries if frozenset(q) in self.filtered_in_sets]
         for q in poss_queries:
-            data_values[q] = dict(zip(var_dict.keys(),
-                [self.inters_df_dict[frozenset(q)][v].values for k, v in var_dict.items()]))
-        data_values['others'] = dict(zip(var_dict.keys(),
-            [chain(*[self.inters_df_dict[frozenset(q)][v].values for q in self.filtered_in_sets if q not in poss_queries])
-             for k, v in var_dict.items()]))
+            data_values[q] = dict(
+                zip(var_dict.keys(),
+                    [self.inters_df_dict[frozenset(q)][v].values for k, v in var_dict.items()])
+            )
+        data_values['others'] = dict(
+            zip(var_dict.keys(),
+                [chain(*[self.inters_df_dict[frozenset(q)][v].values
+                         for q in self.filtered_in_sets if q not in poss_queries])
+                 for k, v in var_dict.items()]))
         for k, vals in data_values['others'].items():
             data_values['others'][k] = [x for x in vals]
 
@@ -632,23 +647,28 @@ if __name__ == '__main__':
     from pickle import load
 
     f = open('../data/test_data_dict.pckl', 'rb')
-    data_dict = load(f)
+    data_dictionary = load(f)
     f.close()
-    # df1 = pd.DataFrame(index=list('abcd'), columns=('rating_std', 'rating_avg', 'views'), data=np.random.rand(4, 3)).reset_index()
-    # df2 = pd.DataFrame(index=list('abxyz'), columns=('rating_std', 'rating_avg', 'views'), data=np.random.rand(5, 3)).reset_index()
-    # df3 = pd.DataFrame(index=list('ghxde'), columns=('rating_std', 'rating_avg', 'views'), data=np.random.rand(5, 3)).reset_index()
+    # df1 = pd.DataFrame(index=list('abcd'), columns=('rating_std', 'rating_avg', 'views'),
+    #                    data=np.random.rand(4, 3)).reset_index()
+    # df2 = pd.DataFrame(index=list('abxyz'), columns=('rating_std', 'rating_avg', 'views'),
+    #                    data=np.random.rand(5, 3)).reset_index()
+    # df3 = pd.DataFrame(index=list('ghxde'), columns=('rating_std', 'rating_avg', 'views'),
+    #                    data=np.random.rand(5, 3)).reset_index()
     # data_dict = {'df1':df1, 'df2':df2, 'df3':df3}
-    d = plot(data_dict, unique_keys=['title'],
+    d = plot(data_dictionary,
+             unique_keys=['title'],
              inters_size_bounds=(2, 20),
-         query=[('action',), ('romance', 'action', 'war', 'adventure'), ('romance', 'adventure')],
-         additional_plots=[{'kind': 'scatter',
-                            'data_quantities': {'x': 'rating_std', 'y': 'rating_avg'},
-                            'graph_properties': {'alpha': 1, 'edgecolor': 'w', 'lw': .3}},
-                           {'kind': 'hist',
-                           'data_quantities': {'x': 'views'},
-                           'graph_properties': {'bins': 10, 'alpha': .6}}
-                           ]
-         )
+             query=[('action',), ('romance', 'action', 'war', 'adventure'),
+                    ('romance', 'adventure')],
+             additional_plots=[
+                 {'kind': 'scatter',
+                  'data_quantities': {'x': 'rating_std', 'y': 'rating_avg'},
+                  'graph_properties': {'alpha': 1, 'edgecolor': 'w', 'lw': .3}},
+                 {'kind': 'hist',
+                  'data_quantities': {'x': 'views'},
+                  'graph_properties': {'bins': 10, 'alpha': .6}}
+             ])
 
 # TODO: if possible, remove horrible hack that uses Index instead of pd.merge
 # TODO: adjust figure size depending on number of graphs

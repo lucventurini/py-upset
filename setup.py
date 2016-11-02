@@ -1,5 +1,6 @@
 __author__ = 'leo@opensignal.com'
-from distutils.core import setup
+from setuptools import setup, find_packages
+# from distutils.core import setup
 # To use a consistent encoding
 from codecs import open
 from os import path
