@@ -172,12 +172,16 @@ class UpSetPlot:
             botgs = main_gs[2, 0]
         else:
             topgs = gridspec.GridSpec(1, 1)[0, 0]
-        fig_cols = self.cols + 5
+        fig_cols = self.cols  # + 5
         fig_rows = self.rows + self.rows * 4
 
-        gs_top = gridspec.GridSpecFromSubplotSpec(fig_rows, fig_cols, subplot_spec=topgs, wspace=.1, hspace=.2)
+        gs_top = gridspec.GridSpecFromSubplotSpec(fig_rows,
+                                                  fig_cols,
+                                                  subplot_spec=topgs,
+                                                  wspace=.1,
+                                                  hspace=.2)
         setsize_w, setsize_h = 3, self.rows
-        tablesize_w, tablesize_h = setsize_w + 2, self.rows
+        tablesize_w, tablesize_h = setsize_w + 5, self.rows
         intmatrix_w, intmatrix_h = tablesize_w + self.cols, self.rows
         intbars_w, intbars_h = tablesize_w + self.cols, self.rows * 4
         ax_setsize = plt.subplot(gs_top[-1:-setsize_h, 0:setsize_w])
@@ -297,7 +301,7 @@ class UpSetPlot:
 
         ax.barh(bar_bottoms, [len(x) for x in sorted_sets], height=height, color=self.greys[1])
 
-        ax.ticklabel_format(style='sci', axis='x', scilimits=(0, 4))
+        # ax.ticklabel_format(style='sci', axis='x', scilimits=(0, 4))
 
         self._strip_axes(ax, keep_spines=['bottom'], keep_ticklabels=['bottom'])
 
@@ -382,10 +386,10 @@ class UpSetPlot:
         label_vertical_gap = (ylim[1] - ylim[0]) / 60
 
         for x, y in zip(self.x_values, inters_sizes):
-            ax.text(x, y + label_vertical_gap, "%.2g" % y,
+            ax.text(x, y + label_vertical_gap, int(y),
                     rotation=90, ha='center', va='bottom')
 
-        ax.ticklabel_format(style='sci', axis='y', scilimits=(0, 4))
+        # ax.ticklabel_format(style='sci', axis='y', scilimits=(0, 4))
 
         gap = max(ylim) / 500.0 * 20
         ax.set_ylim(ylim[0] - gap, ylim[1] + gap)
@@ -442,14 +446,17 @@ class UpSetPlot:
             # for c in chain.from_iterable([in_circles, out_circles]):
             # ax.add_patch(c)
             ax.scatter(np.repeat(self.x_values[col_num], len(in_y)), in_y,
-                       color=np.tile(self._color_for_query(frozenset(in_sets)), (len(in_y), 1)),
-                       s=300)
-            ax.scatter(np.repeat(self.x_values[col_num], len(out_y)), out_y, color=self.greys[0], s=300)
+                       color="dimgrey",
+                       # color=np.tile(self._color_for_query(frozenset(in_sets)),
+                       #               (len(in_y), 1)),
+                       s=200)
+            ax.scatter(np.repeat(self.x_values[col_num], len(out_y)), out_y, color="lightgrey", s=300)
             ax.vlines(self.x_values[col_num],
                       min(in_y),
                       max(in_y),
                       lw=3.5,
-                      color=self._color_for_query(frozenset(in_sets)))
+                      color="dimgrey")
+                      # color=self._color_for_query(frozenset(in_sets)))
 
     def additional_plot(self, ax_index, kind, data_values, graph_args, *, labels=None):
         # TODO: find out the meaning of "kind" and "graph_args"
@@ -543,8 +550,8 @@ class DataExtractor:
             dfs.append(df[unique_keys])
         df_names = np.array(df_names)
         # order dfs
-        base_sets_order = np.argsort([x.shape[0] for x in dfs])[::-1]
-        ordered_base_set_names = df_names[base_sets_order]
+        # base_sets_order = np.argsort([x.shape[0] for x in dfs])[::-1]
+        ordered_base_set_names = np.flipud(df_names)
         ordered_base_sets = [data_dict[name] for name in ordered_base_set_names]
         set_dict = dict(zip(ordered_base_set_names, ordered_base_sets))
 
@@ -597,6 +604,7 @@ class DataExtractor:
         :return: Array of int (sizes), array of tuples (sets included in intersection), array of tuples (sets
         excluded from intersection), all filtered and sorted.
         """
+
         inters_sizes = np.array([self.inters_df_dict[x].shape[0] for x in self.in_sets_list])
         inters_degrees = np.array(self.inters_degrees)
 
